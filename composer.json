@@ -1,0 +1,43 @@
+{
+  "name": "fastframe/composer-packages",
+  "type": "composer-plugin",
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "config": {
+    "sort-packages": true
+  },
+  "autoload": {
+    "classmap": [
+      "src/Container.php",
+      "src/NotFoundException.php",
+      "src/Package.php",
+      "src/Packages.php",
+      "src/Plugin.php"
+    ]
+  },
+  "require": {
+    "php": "^7.1.0",
+    "composer-plugin-api": "^1.0.0",
+    "psr/container": "^1.0"
+  },
+  "require-dev": {
+    "composer/composer": "~1",
+    "mikey179/vfsStream": "^1.6",
+    "phpunit/phpunit": "^7",
+    "syberisle/coding-standards": "^2"
+  },
+  "scripts" : {
+    "test" : "@php vendor/bin/phpunit",
+    "test-coverage" : "@php vendor/bin/phpunit --coverage-html=tests/html-coverage",
+    "sniff": [
+      "@php vendor/bin/phpcs"
+    ],
+    "format" : [
+      "@php vendor/bin/phpcbf"
+    ]
+  },
+  "extra": {
+    "post-update-cmd": "FastFrame\\Composer\\Packages\\Plugin::dumpPackages",
+    "post-install-cmd": "FastFrame\\Composer\\Packages\\Plugin::dumpPackages"
+  }
+}

@@ -1,0 +1,5 @@
+.idea
+vendor
+tmp
+composer.lock
+tests/html-coverage
