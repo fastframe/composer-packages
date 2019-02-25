@@ -26,18 +26,19 @@
     "phpunit/phpunit": "^7",
     "syberisle/coding-standards": "^2"
   },
-  "scripts" : {
-    "test" : "@php vendor/bin/phpunit",
-    "test-coverage" : "@php vendor/bin/phpunit --coverage-html=tests/html-coverage",
+  "scripts": {
+    "post-update-cmd": "FastFrame\\Composer\\Packages\\Plugin::dumpPackages",
+    "post-install-cmd": "FastFrame\\Composer\\Packages\\Plugin::dumpPackages",
+    "test": "@php vendor/bin/phpunit",
+    "test-coverage": "@php vendor/bin/phpunit --coverage-html=tests/html-coverage",
     "sniff": [
       "@php vendor/bin/phpcs"
     ],
-    "format" : [
+    "format": [
       "@php vendor/bin/phpcbf"
     ]
   },
   "extra": {
-    "post-update-cmd": "FastFrame\\Composer\\Packages\\Plugin::dumpPackages",
-    "post-install-cmd": "FastFrame\\Composer\\Packages\\Plugin::dumpPackages"
+    "class": "FastFrame\\Composer\\Packages\\Plugin"
   }
 }
