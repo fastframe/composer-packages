@@ -30,7 +30,7 @@ class Container
 	public function __construct(array $packages = array(), array $types = array())
 	{
 		$this->packages = empty($packages) ? Packages::PACKAGES : $packages;
-		$this->types = empty($types) ? Packages::TYPES : $types;
+		$this->types    = empty($types) ? Packages::TYPES : $types;
 	}
 
 	/**
@@ -42,7 +42,8 @@ class Container
 
 		if (array_key_exists($id, $this->packages)) {
 			if (!is_object($this->packages[$id])) {
-				$this->packages[$id] = Package::fromDefinition($this->packages[$id]);
+				$this->packages[$id]['extra'] = $this->convertToObject($this->packages[$id]['extra']);
+				$this->packages[$id]          = Package::fromDefinition($this->packages[$id]);
 			}
 
 			return $this->packages[$id];
@@ -68,5 +69,29 @@ class Container
 		return isset($this->types[$type])
 			? $this->types[$type]
 			: array();
+	}
+
+	/**
+	 * Converts the passed in ary in to an object
+	 *
+	 * NOTES:
+	 *  - this converts keys with - in them to in to _ : branch-alias > branch_alias to make it easier to use
+	 *
+	 * @param $ary
+	 * @return \stdClass
+	 */
+	protected function convertToObject($ary)
+	{
+		if (!is_array($ary)) {
+			return $ary;
+		}
+
+		$ret = new \stdClass();
+		foreach ($ary as $key => $value) {
+			$key       = str_replace('-', '_', $key);
+			$ret->$key = is_array($value) ? $this->convertToObject($value) : $value;
+		}
+
+		return $ret;
 	}
 }

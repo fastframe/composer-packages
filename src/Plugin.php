@@ -189,9 +189,9 @@ EOF;
 	protected function generatePackageInformation(PackageInterface $pkg, InstallationManager $manager): array
 	{
 		// need to filter out composer information in the extra
-		$extra = $this->convertToObject($pkg->getExtra());
-		if (isset($extra->branch_alias)) {
-			unset($extra->branch_alias);
+		$extra = $pkg->getExtra();
+		if (isset($extra['branch-alias'])) {
+			unset($extra['branch_alias']);
 		}
 
 		return array(
@@ -201,29 +201,5 @@ EOF;
 			$this->cleanPath($manager->getInstallPath($pkg)),
 			$extra,
 		);
-	}
-
-	/**
-	 * Converts the passed in ary in to an object
-	 *
-	 * NOTES:
-	 *  - this converts keys with - in them to in to _ : branch-alias > branch_alias to make it easier to use
-	 *
-	 * @param $ary
-	 * @return \stdClass
-	 */
-	public function convertToObject($ary)
-	{
-		if (!is_array($ary)) {
-			return $ary;
-		}
-
-		$ret = new \stdClass();
-		foreach ($ary as $key => $value) {
-			$key = str_replace('-', '_', $key);
-			$ret->$key = is_array($value) ? (object)array_map([$this, 'convertToObject'], $value) : $value;
-		}
-
-		return $ret;
 	}
 }
