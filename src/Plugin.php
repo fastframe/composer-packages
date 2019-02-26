@@ -26,6 +26,9 @@ use Symfony\Component\Filesystem\Filesystem;
 class Plugin
 	implements PluginInterface, EventSubscriberInterface
 {
+	const NAME_KEY      = 0;
+	const TYPE_KEY      = 1;
+	const PATH_KEY      = 3;
 	const COMPOSER_NAME = 'fastframe/composer-packages';
 
 	/**
@@ -44,7 +47,6 @@ namespace FastFrame\Composer\Packages;
  */
 interface $CLASS
 {
-	public const ROOT_PATH = $ROOT_PATH;
 	public const PACKAGES = $PACKAGES;
 	public const TYPES = $TYPES;
 }
@@ -89,20 +91,22 @@ EOF;
 	public function dump(Composer $composer, IOInterface $io)
 	{
 		$io->write("<info>Dumping package information</info>");
-		$manager          = $composer->getInstallationManager();
-		$root             = $composer->getPackage();
-		$this->vendorPath = $composer->getConfig()->get('vendor-dir');
-		$packages         = array();
 
+		$manager        = $composer->getInstallationManager();
+		$root           = $composer->getPackage();
+		$repo           = $composer->getRepositoryManager()->getLocalRepository();
+		$this->rootPath = $this->sterilizePath(\Composer\Factory::getComposerFile());
+		if ($this->rootPath{0} === '.') {
+			$this->rootPath = $this->sterilizePath(getcwd());
+		}
+
+		$packages = array();
 		if ($root->getName() !== '__root__') {
-			// resolves root package as absolute project root path
 			$packages[$root->getName()] = $this->generatePackageInformation($root, $manager);
 		}
 
-		$repo = $composer->getRepositoryManager()->getLocalRepository();
 		foreach ($repo->getPackages() as $package) {
-			$name            = $package->getName();
-			$packages[$name] = $this->generatePackageInformation($package, $manager);
+			$packages[$package->getName()] = $this->generatePackageInformation($package, $manager);
 		}
 
 		$this->saveToFile($packages);
@@ -115,11 +119,17 @@ EOF;
 	 */
 	protected function saveToFile(array $packages)
 	{
-		$ourPath = $packages[self::COMPOSER_NAME][3];
-		$path    = "{$this->rootPath}{$ourPath}/src/Packages.php";
+		$ourPath = $packages[self::COMPOSER_NAME][self::PATH_KEY];
 		$types   = array();
+
+		if (!is_writable($path = "{$this->rootPath}{$ourPath}/src/Packages.php")) {
+			if (!is_writable($path = "{$ourPath}/src/Packages.php")) {
+				throw new \RuntimeException("Unable to write Packages.php");
+			}
+		}
+
 		foreach ($packages as $name => $pkg) {
-			$types[$pkg[1]][] = $pkg[0];
+			$types[$pkg[self::TYPE_KEY]][] = $pkg[self::NAME_KEY];
 		}
 
 		file_put_contents(
@@ -130,7 +140,6 @@ EOF;
 					'$CLASS'     => 'Packages',
 					'$DATE'      => date('Y-m-d H:i:s'),
 					'$PACKAGES'  => $this->renderForOutput($packages),
-					'$ROOT_PATH' => $this->renderForOutput($this->rootPath),
 					'$TYPES'     => $this->renderForOutput($types)
 				)
 			)
@@ -163,20 +172,25 @@ EOF;
 	/**
 	 * Cleans up the path
 	 *
+	 * mindplay/composer-locator noticed an issue on windows installations, this cleans it up
+	 *
 	 * @param $path
 	 * @return bool|string
 	 */
-	protected function cleanPath($path)
+	protected function sterilizePath($path)
 	{
-		// mindplay/composer-locator noticed an issue on windows installations, this cleans it up
-		$path = strtr($path, '\\', '/');
+		return str_replace('\\', '/', $path);
+	}
 
-		if (file_exists($file = "{$this->rootPath}/{$path}")) {
-			// installer returns the relative path
-			return $file;
-		}
-
-		return $path;
+	/**
+	 * Normalizes the path by sterlizing and removing the rootPath
+	 *
+	 * @param $path
+	 * @return bool|string
+	 */
+	protected function normalizePath($path)
+	{
+		return $this->sterilizePath(str_replace($this->rootPath, '', $path));
 	}
 
 	/**
@@ -191,14 +205,14 @@ EOF;
 		// need to filter out composer information in the extra
 		$extra = $pkg->getExtra();
 		if (isset($extra['branch-alias'])) {
-			unset($extra['branch_alias']);
+			unset($extra['branch-alias']);
 		}
 
 		return array(
 			$pkg->getPrettyName(),
 			$pkg->getType(),
 			$pkg->getVersion(),
-			$this->cleanPath($manager->getInstallPath($pkg)),
+			$this->normalizePath($manager->getInstallPath($pkg)),
 			$extra,
 		);
 	}

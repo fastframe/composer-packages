@@ -15,6 +15,7 @@ class ContainerTest
 	protected function setUp()
 	{
 		$this->container = new Container(
+			null,
 			array('test/test' => array('test/test', 'library', '/somewhere', '1.0.0.0', array())),
 			array('library' => array('test/test'))
 		);

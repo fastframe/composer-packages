@@ -3,3 +3,4 @@ vendor
 tmp
 composer.lock
 tests/html-coverage
+src/Packages.php

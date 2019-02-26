@@ -9,7 +9,6 @@ namespace FastFrame\Composer\Packages;
  */
 interface Packages
 {
-	public const ROOT_PATH = NULL;
-	public const PACKAGES = array('test/test' => array('test/test', 'library', '1.0.0', 'vfs://root/vendor/test/test', array()), 'test/test-one' => array('test/test-one', 'library', '1.0.0', 'vfs://root/vendor/test/test-one', array()), 'test/test-two' => array('test/test-two', 'library', '1.0.0', 'vfs://root/vendor/test/test-two', array()), 'fastframe/composer-packages' => array('fastframe/composer-packages', 'composer-plugin', '1.0.0', 'vfs://root/vendor/fastframe/composer-packages', array()));
+	public const PACKAGES = array('test/test' => array('test/test', 'library', '1.0.0', '/vendor/test/test', array()), 'test/test-one' => array('test/test-one', 'library', '1.0.0', '/vendor/test/test-one', array()), 'test/test-two' => array('test/test-two', 'library', '1.0.0', '/vendor/test/test-two', array()), 'fastframe/composer-packages' => array('fastframe/composer-packages', 'composer-plugin', '1.0.0', '/vendor/fastframe/composer-packages', array()));
 	public const TYPES = array('library' => array('test/test', 'test/test-one', 'test/test-two'), 'composer-plugin' => array('fastframe/composer-packages'));
 }

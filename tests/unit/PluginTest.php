@@ -29,7 +29,6 @@ class PluginTest
 
 	public function setUp()
 	{
-		$this->plugin = new Plugin();
 
 		$this->vfs = vfsStream::setup(
 			'root',
@@ -39,12 +38,16 @@ class PluginTest
 				'vendor' => array(
 					'fastframe' => array(
 						'composer-packages' => array(
-							'src' => array()
+							'src' => array(
+								'Packages.php' => ''
+							)
 						)
 					)
 				)
 			)
 		);
+
+		$this->plugin = new Plugin($this->vfs->url());
 
 		$this->io       = $this->createMock(IOInterface::class);
 		$this->composer = $this->createMock(Composer::class);
@@ -105,6 +108,7 @@ class PluginTest
 
 		$config->method('get')->with('vendor-dir')->willReturn($this->vfs->url());
 
+		putenv("COMPOSER={$rootPath}");
 		Plugin::dumpPackages(
 			new Event(
 				'post-install-cmd',
@@ -112,6 +116,7 @@ class PluginTest
 				$this->io
 			)
 		);
+		putenv("COMPOSER=");
 
 		$rootPath = $this->vfs->url();
 		$file     = "{$rootPath}/vendor/fastframe/composer-packages/src/Packages.php";

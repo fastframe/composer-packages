@@ -17,6 +17,9 @@ use Psr\Container\ContainerInterface;
 class Container
 	implements ContainerInterface
 {
+	const PATH_KEY = 3;
+	const EXTRA_KEY = 4;
+
 	/**
 	 * @var Package[] Map of packages
 	 */
@@ -27,8 +30,14 @@ class Container
 	 */
 	protected $types;
 
-	public function __construct(array $packages = array(), array $types = array())
+	/**
+	 * @var string The path to the root of the project
+	 */
+	protected $path;
+
+	public function __construct(string $path = null, array $packages = array(), array $types = array())
 	{
+		$this->path     = str_replace('\\', '/', $path ?? getcwd());
 		$this->packages = empty($packages) ? Packages::PACKAGES : $packages;
 		$this->types    = empty($types) ? Packages::TYPES : $types;
 	}
@@ -42,8 +51,9 @@ class Container
 
 		if (array_key_exists($id, $this->packages)) {
 			if (!is_object($this->packages[$id])) {
-				$this->packages[$id]['extra'] = $this->convertToObject($this->packages[$id]['extra']);
-				$this->packages[$id]          = Package::fromDefinition($this->packages[$id]);
+				$this->packages[$id][self::EXTRA_KEY] = $this->convertToObject($this->packages[$id][self::EXTRA_KEY]);
+				$this->packages[$id][self::PATH_KEY] = $this->path . $this->packages[$id][self::PATH_KEY];
+				$this->packages[$id]    = Package::fromDefinition($this->packages[$id]);
 			}
 
 			return $this->packages[$id];
