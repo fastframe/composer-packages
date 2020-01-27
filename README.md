@@ -1,11 +1,12 @@
 # FastFrame Composer Packages Plugin
 
-This plugin provides an easy method of determining the installation path, name, version, and extra attributes of a given Compose package, by name.
+This plugin provides an easy method of determining the installation path, name, version, and extra attributes of a given
+Composer package, by name.
 
-Use this to locate vendor package roots. Most of the times is this going to be used for template files, or other
+Use this to locate vendor package roots. Most of the times this is going to be used for template files, or other
 types of assets that you want to get from a package.
 
-Running `composer install` or `composer update` will trigger ths Packages.php to be generated, this contains a registry
+Running `composer install` or `composer update` will trigger the Packages.php to be generated, this contains a registry
 of the package installation paths as well as their types.
 
 ## Installation

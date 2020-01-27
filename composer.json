@@ -1,6 +1,8 @@
 {
   "name": "fastframe/composer-packages",
+  "description": "Composer plugin to lookup vendor package roots",
   "type": "composer-plugin",
+  "license": "MIT",
   "minimum-stability": "dev",
   "prefer-stable": true,
   "config": {
@@ -22,7 +24,7 @@
   },
   "require-dev": {
     "composer/composer": "~1",
-    "mikey179/vfsStream": "^1.6",
+    "mikey179/vfsstream": "^1.6",
     "phpunit/phpunit": "^7",
     "syberisle/coding-standards": "^2"
   },
