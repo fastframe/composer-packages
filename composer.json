@@ -23,7 +23,7 @@
     "psr/container": "^1.0"
   },
   "require-dev": {
-    "composer/composer": "~1",
+    "composer/composer": "~2",
     "mikey179/vfsstream": "^1.6",
     "phpunit/phpunit": "^7",
     "syberisle/coding-standards": "^2"
