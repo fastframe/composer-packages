@@ -115,7 +115,7 @@ EOF;
 
 		$repo           = $composer->getRepositoryManager()->getLocalRepository();
 		$this->rootPath = $this->sterilizePath(Factory::getComposerFile());
-		if ($this->rootPath{0} === '.') {
+		if ($this->rootPath[0] === '.') {
 			$this->rootPath = $this->sterilizePath(getcwd());
 		}
 
