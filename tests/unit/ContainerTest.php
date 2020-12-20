@@ -12,7 +12,7 @@ class ContainerTest
 	 */
 	protected $container;
 
-	protected function setUp()
+	protected function setUp(): void
 	{
 		$this->container = new Container(
 			null,
@@ -39,7 +39,6 @@ class ContainerTest
 		$this->container->get('test/nope');
 	}
 
-
 	public function testGetByType()
 	{
 		$libs = $this->container->getByType('library');
@@ -52,5 +51,26 @@ class ContainerTest
 		$ary = $this->container->getByType('no-lib-here');
 		self::assertIsArray($ary);
 		self::assertEmpty($ary);
+	}
+
+	public function testExtraKeysUseUnderscores()
+	{
+		$this->container = new Container(
+			null,
+			array('test/test' => array('test/test', 'library', '/somewhere', '1.0.0.0', array('test-key' => 'test'))),
+			array('library' => array('test/test'))
+		);
+		$extra           = $this->container->get('test/test')->extra();
+		self::assertTrue(isset($extra->test_key));
+	}
+
+	public function testExtraReturnsExtraAsIs()
+	{
+		$this->container = new Container(
+			null,
+			array('test/test' => array('test/test', 'library', '/somewhere', '1.0.0.0', 'kakaw')),
+			array('library' => array('test/test'))
+		);
+		self::assertEquals('kakaw', $this->container->get('test/test')->extra());
 	}
 }

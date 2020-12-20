@@ -23,13 +23,12 @@ class PluginTest
 	protected $vfs;
 
 	/**
-	 * @var Plugin
+	 * @var IOInterface
 	 */
-	protected $plugin;
+	protected $io;
 
-	public function setUp()
+	public function setUp(): void
 	{
-
 		$this->vfs = vfsStream::setup(
 			'root',
 			null,
@@ -47,13 +46,7 @@ class PluginTest
 			)
 		);
 
-		$this->plugin = new Plugin($this->vfs->url());
-
 		$this->io       = $this->createMock(IOInterface::class);
-		$this->composer = $this->createMock(Composer::class);
-		$this->events   = $this->getMockBuilder(EventDispatcher::class)->disableOriginalConstructor()->getMock();
-
-		$this->composer->expects(self::any())->method('getEventDispatcher')->willReturn(EventDispatcher::class);
 	}
 
 	protected function generatePackage($name, $type = 'library')
@@ -62,6 +55,13 @@ class PluginTest
 		$pkg->setType($type);
 
 		return $pkg;
+	}
+
+	public function testSkipsSelfAsRoot()
+	{
+		$composer = $this->buildComposer($this->generatePackage(Plugin::COMPOSER_NAME), []);
+		$composer->expects($this->never())->method('getRepositoryManager');
+		Plugin::dumpPackages(new Event('post-install-cmd', $composer, $this->io));
 	}
 
 	public function testGetSubscribedEvents()
@@ -75,27 +75,21 @@ class PluginTest
 		);
 	}
 
-	public function testDumpPackages()
+	protected function buildComposer($package, $packages)
 	{
 		$config         = $this->createMock(Config::class);
 		$repo           = $this->createMock(RepositoryManager::class);
 		$installManager = $this->createMock(Installer\InstallationManager::class);
 		$repository     = $this->createMock(InstalledRepositoryInterface::class);
-
-		$t2 = $this->generatePackage("test/test-two");
-		$t2->setExtra(array('branch-alias' => array('test' => 'key')));
-		$rootPackage = $this->generatePackage('test/test');
-		$packages    = array(
-			$this->generatePackage("test/test-one"),
-			$t2,
-			$this->generatePackage("fastframe/composer-packages", 'composer-plugin'),
-		);
+		$composer       = $this->createMock(Composer::class);
+		$events         = $this->getMockBuilder(EventDispatcher::class)->disableOriginalConstructor()->getMock();
 
 		// build up the dump
-		$this->composer->method('getConfig')->willReturn($config);
-		$this->composer->method('getInstallationManager')->willReturn($installManager);
-		$this->composer->method('getPackage')->willReturn($rootPackage);
-		$this->composer->method('getRepositoryManager')->willReturn($repo);
+		$composer->method('getEventDispatcher')->willReturn($events);
+		$composer->method('getConfig')->willReturn($config);
+		$composer->method('getInstallationManager')->willReturn($installManager);
+		$composer->method('getPackage')->willReturn($package);
+		$composer->method('getRepositoryManager')->willReturn($repo);
 		$repo->method('getLocalRepository')->willReturn($repository);
 		$repository->method('getPackages')->willReturn($packages);
 
@@ -108,14 +102,26 @@ class PluginTest
 
 		$config->method('get')->with('vendor-dir')->willReturn($this->vfs->url());
 
-		putenv("COMPOSER={$rootPath}");
-		Plugin::dumpPackages(
-			new Event(
-				'post-install-cmd',
-				$this->composer,
-				$this->io
+		return $composer;
+	}
+
+	public function testDumpPackages()
+	{
+		$t2 = $this->generatePackage("test/test-two");
+		$t2->setExtra(array('branch-alias' => array('test' => 'key')));
+
+		$composer = $this->buildComposer(
+			$this->generatePackage('test/test'),
+			array(
+				$this->generatePackage("test/test-one"),
+				$t2,
+				$this->generatePackage("fastframe/composer-packages", 'composer-plugin'),
 			)
 		);
+
+		$rootPath = $this->vfs->url();
+		putenv("COMPOSER={$rootPath}");
+		Plugin::dumpPackages(new Event('post-install-cmd', $composer, $this->io));
 		putenv("COMPOSER=");
 
 		$rootPath = $this->vfs->url();

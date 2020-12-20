@@ -9,6 +9,7 @@ namespace FastFrame\Composer\Packages;
 
 use Composer\Composer;
 use Composer\EventDispatcher\EventSubscriberInterface;
+use Composer\Factory;
 use Composer\Installer\InstallationManager;
 use Composer\IO\IOInterface;
 use Composer\Package\PackageInterface;
@@ -16,7 +17,6 @@ use Composer\Plugin\PluginInterface;
 use Composer\Script\Event;
 use Composer\Script\ScriptEvents;
 use RuntimeException;
-use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Composer plugin that generates the Packages for use in the container
@@ -58,11 +58,17 @@ EOF;
 	protected $rootPath;
 
 	/**
-	 * {@inheritDoc}
+	 * Dumps the packages to the file
+	 *
+	 * @param Event $event
 	 */
-	public function activate(Composer $composer, IOInterface $io)
+	public static function dumpPackages(Event $event)
 	{
-		// using event listeners
+		$dumper = new self;
+		$dumper->dump(
+			$event->getComposer(),
+			$event->getIO()
+		);
 	}
 
 	/**
@@ -76,13 +82,22 @@ EOF;
 		);
 	}
 
-	public static function dumpPackages(Event $event)
+	/**
+	 * @codeCoverageIgnore
+	 * {@inheritDoc}
+	 */
+	public function activate(Composer $composer, IOInterface $io)
 	{
-		$dumper = new self;
-		$dumper->dump(
-			$event->getComposer(),
-			$event->getIO()
-		);
+		// using event listeners
+	}
+
+	/**
+	 * @codeCoverageIgnore
+	 * {@inheritDoc}
+	 */
+	public function deactivate(Composer $composer, IOInterface $io)
+	{
+		// composer 2
 	}
 
 	/**
@@ -94,8 +109,12 @@ EOF;
 
 		$manager        = $composer->getInstallationManager();
 		$root           = $composer->getPackage();
+		if ($root->getName() === self::COMPOSER_NAME) {
+			return;
+		}
+
 		$repo           = $composer->getRepositoryManager()->getLocalRepository();
-		$this->rootPath = $this->sterilizePath(\Composer\Factory::getComposerFile());
+		$this->rootPath = $this->sterilizePath(Factory::getComposerFile());
 		if ($this->rootPath{0} === '.') {
 			$this->rootPath = $this->sterilizePath(getcwd());
 		}
@@ -113,84 +132,12 @@ EOF;
 	}
 
 	/**
-	 * Saves the package to the Packages.php file
-	 *
-	 * @param array $packages
+	 * @codeCoverageIgnore
+	 * {@inheritDoc}
 	 */
-	protected function saveToFile(array $packages)
+	public function uninstall(Composer $composer, IOInterface $io)
 	{
-		$ourPath = $packages[self::COMPOSER_NAME][self::PATH_KEY];
-		$types   = array();
-
-		if (!is_writable($path = "{$this->rootPath}{$ourPath}/src/Packages.php")) {
-			if (!is_writable($path = "{$ourPath}/src/Packages.php")) {
-				throw new \RuntimeException("Unable to write Packages.php");
-			}
-		}
-
-		foreach ($packages as $name => $pkg) {
-			$types[$pkg[self::TYPE_KEY]][] = $pkg[self::NAME_KEY];
-		}
-
-		file_put_contents(
-			$path,
-			strtr(
-				self::$outputTemplate,
-				array(
-					'$CLASS'     => 'Packages',
-					'$DATE'      => date('Y-m-d H:i:s'),
-					'$PACKAGES'  => $this->renderForOutput($packages),
-					'$TYPES'     => $this->renderForOutput($types)
-				)
-			)
-		);
-		chmod($path, 0664);
-
-		return;
-	}
-
-	/**
-	 * Renders the data for use in the template
-	 *
-	 * @param mixed $data
-	 * @return string
-	 */
-	protected function renderForOutput($data): string
-	{
-		return preg_replace(
-			array(
-				'/(\d+\s=>)/',
-				'/\s+/',
-				'/, \)/',
-				'/array \( /'
-			),
-			array('', ' ', ')', 'array('),
-			var_export($data, true)
-		);
-	}
-
-	/**
-	 * Cleans up the path
-	 *
-	 * mindplay/composer-locator noticed an issue on windows installations, this cleans it up
-	 *
-	 * @param $path
-	 * @return bool|string
-	 */
-	protected function sterilizePath($path)
-	{
-		return str_replace('\\', '/', $path);
-	}
-
-	/**
-	 * Normalizes the path by sterlizing and removing the rootPath
-	 *
-	 * @param $path
-	 * @return bool|string
-	 */
-	protected function normalizePath($path)
-	{
-		return $this->sterilizePath(str_replace($this->rootPath, '', $path));
+		// composer 2
 	}
 
 	/**
@@ -215,5 +162,84 @@ EOF;
 			$this->normalizePath($manager->getInstallPath($pkg)),
 			$extra,
 		);
+	}
+
+	/**
+	 * Normalizes the path by sterlizing and removing the rootPath
+	 *
+	 * @param $path
+	 * @return bool|string
+	 */
+	protected function normalizePath($path)
+	{
+		return $this->sterilizePath(str_replace($this->rootPath, '', $path));
+	}
+
+	/**
+	 * Renders the data for use in the template
+	 *
+	 * @param mixed $data
+	 * @return string
+	 */
+	protected function renderForOutput($data): string
+	{
+		return preg_replace(
+			array(
+				'/(\d+\s=>)/',
+				'/\s+/',
+				'/, \)/',
+				'/array \( /'
+			),
+			array('', ' ', ')', 'array('),
+			var_export($data, true)
+		);
+	}
+
+	/**
+	 * Saves the package to the Packages.php file
+	 *
+	 * @param array $packages
+	 */
+	protected function saveToFile(array $packages)
+	{
+		$ourPath = $packages[self::COMPOSER_NAME][self::PATH_KEY];
+		$types   = array();
+
+		if (!is_writable($path = "{$this->rootPath}{$ourPath}/src/Packages.php")) {
+			if (!is_writable($path = "{$ourPath}/src/Packages.php")) {
+				throw new RuntimeException("Unable to write Packages.php");
+			}
+		}
+
+		foreach ($packages as $name => $pkg) {
+			$types[$pkg[self::TYPE_KEY]][] = $pkg[self::NAME_KEY];
+		}
+
+		file_put_contents(
+			$path,
+			strtr(
+				self::$outputTemplate,
+				array(
+					'$CLASS'     => 'Packages',
+					'$DATE'      => date('Y-m-d H:i:s'),
+					'$PACKAGES'  => $this->renderForOutput($packages),
+					'$TYPES'     => $this->renderForOutput($types)
+				)
+			)
+		);
+		chmod($path, 0664);
+	}
+
+	/**
+	 * Cleans up the path
+	 *
+	 * mindplay/composer-locator noticed an issue on windows installations, this cleans it up
+	 *
+	 * @param $path
+	 * @return bool|string
+	 */
+	protected function sterilizePath($path)
+	{
+		return str_replace('\\', '/', $path);
 	}
 }
