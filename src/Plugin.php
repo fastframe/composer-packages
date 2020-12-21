@@ -34,7 +34,7 @@ class Plugin
 	/**
 	 * @var string The output template
 	 */
-	private static $outputTemplate = <<<'EOF'
+	protected static $outputTemplate = <<<'EOF'
 <?php
 
 namespace FastFrame\Composer\Packages;
@@ -62,7 +62,7 @@ EOF;
 	 *
 	 * @param Event $event
 	 */
-	public static function dumpPackages(Event $event)
+	public static function dumpPackages(Event $event): void
 	{
 		$dumper = new self;
 		$dumper->dump(
@@ -86,7 +86,7 @@ EOF;
 	 * @codeCoverageIgnore
 	 * {@inheritDoc}
 	 */
-	public function activate(Composer $composer, IOInterface $io)
+	public function activate(Composer $composer, IOInterface $io): void
 	{
 		// using event listeners
 	}
@@ -95,7 +95,7 @@ EOF;
 	 * @codeCoverageIgnore
 	 * {@inheritDoc}
 	 */
-	public function deactivate(Composer $composer, IOInterface $io)
+	public function deactivate(Composer $composer, IOInterface $io): void
 	{
 		// composer 2
 	}
@@ -103,12 +103,12 @@ EOF;
 	/**
 	 * Dumps the packages to the Packages.php file
 	 */
-	public function dump(Composer $composer, IOInterface $io)
+	public function dump(Composer $composer, IOInterface $io): void
 	{
 		$io->write("<info>Dumping package information</info>");
 
-		$manager        = $composer->getInstallationManager();
-		$root           = $composer->getPackage();
+		$manager = $composer->getInstallationManager();
+		$root    = $composer->getPackage();
 		if ($root->getName() === self::COMPOSER_NAME) {
 			return;
 		}
@@ -116,7 +116,7 @@ EOF;
 		$repo           = $composer->getRepositoryManager()->getLocalRepository();
 		$this->rootPath = $this->sterilizePath(Factory::getComposerFile());
 		if ($this->rootPath[0] === '.') {
-			$this->rootPath = $this->sterilizePath(getcwd());
+			$this->rootPath = $this->sterilizePath((string)getcwd());
 		}
 
 		$packages = array();
@@ -135,7 +135,7 @@ EOF;
 	 * @codeCoverageIgnore
 	 * {@inheritDoc}
 	 */
-	public function uninstall(Composer $composer, IOInterface $io)
+	public function uninstall(Composer $composer, IOInterface $io): void
 	{
 		// composer 2
 	}
@@ -145,6 +145,7 @@ EOF;
 	 *
 	 * @param PackageInterface    $pkg
 	 * @param InstallationManager $manager
+	 *
 	 * @return array
 	 */
 	protected function generatePackageInformation(PackageInterface $pkg, InstallationManager $manager): array
@@ -167,10 +168,11 @@ EOF;
 	/**
 	 * Normalizes the path by sterlizing and removing the rootPath
 	 *
-	 * @param $path
-	 * @return bool|string
+	 * @param string $path
+	 *
+	 * @return string
 	 */
-	protected function normalizePath($path)
+	protected function normalizePath(string $path): string
 	{
 		return $this->sterilizePath(str_replace($this->rootPath, '', $path));
 	}
@@ -179,11 +181,12 @@ EOF;
 	 * Renders the data for use in the template
 	 *
 	 * @param mixed $data
+	 *
 	 * @return string
 	 */
 	protected function renderForOutput($data): string
 	{
-		return preg_replace(
+		return (string)preg_replace(
 			array(
 				'/(\d+\s=>)/',
 				'/\s+/',
@@ -200,7 +203,7 @@ EOF;
 	 *
 	 * @param array $packages
 	 */
-	protected function saveToFile(array $packages)
+	protected function saveToFile(array $packages): void
 	{
 		$ourPath = $packages[self::COMPOSER_NAME][self::PATH_KEY];
 		$types   = array();
@@ -220,10 +223,10 @@ EOF;
 			strtr(
 				self::$outputTemplate,
 				array(
-					'$CLASS'     => 'Packages',
-					'$DATE'      => date('Y-m-d H:i:s'),
-					'$PACKAGES'  => $this->renderForOutput($packages),
-					'$TYPES'     => $this->renderForOutput($types)
+					'$CLASS'    => 'Packages',
+					'$DATE'     => date('Y-m-d H:i:s'),
+					'$PACKAGES' => $this->renderForOutput($packages),
+					'$TYPES'    => $this->renderForOutput($types)
 				)
 			)
 		);
@@ -235,10 +238,11 @@ EOF;
 	 *
 	 * mindplay/composer-locator noticed an issue on windows installations, this cleans it up
 	 *
-	 * @param $path
-	 * @return bool|string
+	 * @param string $path
+	 *
+	 * @return string
 	 */
-	protected function sterilizePath($path)
+	protected function sterilizePath(string $path): string
 	{
 		return str_replace('\\', '/', $path);
 	}

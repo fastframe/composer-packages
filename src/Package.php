@@ -77,11 +77,20 @@ class Package
 	}
 
 	/**
-	 * @return object The
+	 * @return object The composer.json
 	 */
 	public function composerJson()
 	{
-		return $this->composer_json
-			?? $this->composer_json = json_decode(file_get_contents("{$this->data[3]}/composer.json"));
+		return $this->composer_json ?? ($this->composer_json = $this->decodeComposerJson());
+	}
+
+	protected function decodeComposerJson(): object
+	{
+		$data = file_get_contents($file = "{$this->data[3]}/composer.json");
+		if ($data === false) {
+			throw new \RuntimeException("Unable to read composer.json for {$this->data[0]}");
+		}
+
+		return json_decode($data);
 	}
 }

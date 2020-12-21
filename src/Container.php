@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \FastFrame\Composer\Packages\Package
+ * Contains \FastFrame\Composer\Packages\Container
  */
 
 namespace FastFrame\Composer\Packages;
@@ -17,16 +17,16 @@ use Psr\Container\ContainerInterface;
 class Container
 	implements ContainerInterface
 {
-	const PATH_KEY = 3;
+	const PATH_KEY  = 3;
 	const EXTRA_KEY = 4;
 
 	/**
-	 * @var Package[] Map of packages
+	 * @var array Map of packages
 	 */
 	protected $packages;
 
 	/**
-	 * @var string[] Map of types to associated packages
+	 * @var string[][] Map of types to associated packages
 	 */
 	protected $types;
 
@@ -37,9 +37,34 @@ class Container
 
 	public function __construct(string $path = null, array $packages = array(), array $types = array())
 	{
-		$this->path     = str_replace('\\', '/', $path ?? getcwd());
+		$this->path     = static::resolvePath($path);
 		$this->packages = empty($packages) ? Packages::PACKAGES : $packages;
 		$this->types    = empty($types) ? Packages::TYPES : $types;
+	}
+
+	/**
+	 * @seam
+	 * @return string The CWD
+	 */
+	protected static function getcwd():string
+	{
+		return (string)(getcwd() ?? '');
+	}
+
+	/**
+	 * Resolves the path by using the path or getcwd
+	 *
+	 * @param ?string $path The path if set
+	 *
+	 * @return string The path or current working directory
+	 */
+	protected static function resolvePath(?string $path): string
+	{
+		if (empty($path) && empty($path = static::getcwd())) {
+			throw new \RuntimeException("No path specified and getcwd() failed");
+		}
+
+		return str_replace('\\', '/', (string)$path);
 	}
 
 	/**
@@ -52,8 +77,8 @@ class Container
 		if (array_key_exists($id, $this->packages)) {
 			if (!is_object($this->packages[$id])) {
 				$this->packages[$id][self::EXTRA_KEY] = $this->convertToObject($this->packages[$id][self::EXTRA_KEY]);
-				$this->packages[$id][self::PATH_KEY] = $this->path . $this->packages[$id][self::PATH_KEY];
-				$this->packages[$id]    = Package::fromDefinition($this->packages[$id]);
+				$this->packages[$id][self::PATH_KEY]  = $this->path . $this->packages[$id][self::PATH_KEY];
+				$this->packages[$id]                  = Package::fromDefinition($this->packages[$id]);
 			}
 
 			return $this->packages[$id];
@@ -71,7 +96,8 @@ class Container
 	}
 
 	/**
-	 * @param $type
+	 * @param mixed $type
+	 *
 	 * @return string[] List of packages for the given type
 	 */
 	public function getByType($type): array
@@ -87,8 +113,9 @@ class Container
 	 * NOTES:
 	 *  - this converts keys with - in them to in to _ : branch-alias > branch_alias to make it easier to use
 	 *
-	 * @param $ary
-	 * @return \stdClass
+	 * @param mixed $ary
+	 *
+	 * @return mixed
 	 */
 	protected function convertToObject($ary)
 	{

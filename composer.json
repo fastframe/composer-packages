@@ -25,6 +25,7 @@
   "require-dev": {
     "composer/composer": "~1 || ~2",
     "mikey179/vfsstream": "^1.6",
+    "phpstan/phpstan": "^0.12.63",
     "phpunit/phpunit": "^8",
     "syberisle/coding-standards": "^2"
   },
@@ -34,7 +35,8 @@
     "test": "@php vendor/bin/phpunit",
     "test-coverage": "@php vendor/bin/phpunit --coverage-html=tests/html-coverage",
     "sniff": "@php vendor/bin/phpcs",
-    "format": "@php vendor/bin/phpcbf"
+    "format": "@php vendor/bin/phpcbf",
+    "phpstan": "@php -d memory_limit=-1 vendor/bin/phpstan analyse src"
   },
   "extra": {
     "class": "FastFrame\\Composer\\Packages\\Plugin"
