@@ -31,5 +31,8 @@ jobs:
     - name: Coding standards
       if: matrix.analysis
       run: composer sniff
+    - name: Coding standards
+      if: matrix.analysis
+      run: composer phpstan
     - name: Tests
       run: composer test
