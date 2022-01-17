@@ -25,7 +25,7 @@
   "require-dev": {
     "composer/composer": "~1 || ~2",
     "mikey179/vfsstream": "^1.6",
-    "phpstan/phpstan": "^0.12.63",
+    "phpstan/phpstan": "^1.4.1",
     "phpunit/phpunit": "^8",
     "syberisle/coding-standards": "^2"
   },
