@@ -7,6 +7,7 @@
 
 namespace FastFrame\Composer\Packages;
 
+use function getcwd;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -43,15 +44,6 @@ class Container
 	}
 
 	/**
-	 * @seam
-	 * @return string The CWD
-	 */
-	protected static function getcwd():string
-	{
-		return (string)(getcwd() ?? '');
-	}
-
-	/**
 	 * Resolves the path by using the path or getcwd
 	 *
 	 * @param ?string $path The path if set
@@ -60,7 +52,7 @@ class Container
 	 */
 	protected static function resolvePath(?string $path): string
 	{
-		if (empty($path) && empty($path = static::getcwd())) {
+		if (empty($path) && empty($path = getcwd())) {
 			throw new \RuntimeException("No path specified and getcwd() failed");
 		}
 

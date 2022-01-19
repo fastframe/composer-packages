@@ -20,12 +20,13 @@ class Package
 	protected $data;
 
 	/**
-	 * @var object The decoded composer.json file
+	 * @var ?object The decoded composer.json file
 	 */
 	protected $composer_json;
 
 	/**
 	 * @param array $def
+	 *
 	 * @return Package  The Package object
 	 */
 	public static function fromDefinition(array $def)
@@ -91,6 +92,11 @@ class Package
 			throw new \RuntimeException("Unable to read composer.json for {$this->data[0]}");
 		}
 
-		return json_decode($data);
+		$data = json_decode($data);
+		if (is_object($data)) {
+			return $data;
+		}
+
+		throw new \RuntimeException("Invalid composer.json for {$this->data[0]}");
 	}
 }
