@@ -62,7 +62,7 @@ class Container
 	/**
 	 * {@inheritdoc}
 	 */
-	public function get($id)
+	public function get(string $id)
 	{
 		$id = strtolower($id);
 
@@ -82,7 +82,7 @@ class Container
 	/**
 	 * {@inheritdoc}
 	 */
-	public function has($id)
+	public function has(string $id): bool
 	{
 		return array_key_exists(strtolower($id), $this->packages);
 	}
